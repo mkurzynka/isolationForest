@@ -34,54 +34,59 @@ testData = data_noClass_normalize[-trainIds, ]
 testClass = data_onlyClass[-trainIds]
 
 library(class)
-set.seed(1)
-nn3 <- knn(trainData, testData, trainClass, k=2)
-nn3 = as.numeric(nn3)
-# nn3[nn3 == 1] = 0
-# nn3[nn3 ==2 ] = 1
-table(nn3, testClass)
+best_k = 0
+best_k_auc = 0
+for(i in 1:20){
+  set.seed(1)
+  nn3 <- knn(trainData, testData, trainClass, k=i)
+  nn3 = as.numeric(nn3)
+  nn3[nn3 == 1] = 0
+  nn3[nn3 ==2 ] = 1
+  table(nn3, testClass)
+  
+  t_obj = roc(testClass, nn3)
+  plot(t_obj)
+  auc(t_obj)
+  if(auc(t_obj) > best_k_auc){
+    best_k_auc = auc(t_obj)
+    best_k = i
+  }
+}
+
 
 set.seed(123)
-
+best_model = 0
+for(i in seq(0.01, 0.2, 0.01)){
+  for(j in seq(-2, 2, 0.5)){
+    svm.model = svm(trainData,y = trainClass,
+                    type='one-classification',
+                    nu= i,
+                    gamma = 2^j,
+                    kernel="radial")
+    svm.predTest = as.integer(!predict(svm.model, testData))
+    
+    # table(Predicted = svm.predTrain, Reference = trainClass)
+    # print(table(Predicted = svm.predTest, Reference = testClass))
+    t_obj = roc(testClass, svm.predTest)
+    # print(auc(t_obj))
+    if(auc(t_obj) > best_model) {
+      best_roc = t_obj
+      best_model = auc(t_obj)
+      best_gamma_model = 2^j
+      best_nu_model = i
+    }
+    # svm.predTrain = as.integer(!predict(svm.model))
+  }
+}
 
 svm.model = svm(trainData,y = trainClass,
                 type='one-classification',
-                nu=0.4,
-                #gamma = 0.5,
-                scale=TRUE,
+                nu= 0.03,
+                gamma = 0.3535534,
                 kernel="radial")
-
-best_model = 0
-best_gamma_model = 0
-best_nu_model = 0
-
-for(i in seq(0.01, 0.2, 0.01)){
-  for(j in seq(-6, -1, 0.5)){
-  svm.model = svm(trainData,y = trainClass,
-                  type='one-classification',
-                  nu= i,
-                  gamma = 2^j,
-                  kernel="radial")
-  svm.predTest = as.integer(!predict(svm.model, testData))
-
-  # table(Predicted = svm.predTrain, Reference = trainClass)
-  # print(table(Predicted = svm.predTest, Reference = testClass))
-  t_obj = roc(testClass, svm.predTest)
-  # print(auc(t_obj))
-  if(auc(t_obj) > best_model) {
-    best_roc = t_obj
-    best_model = auc(t_obj)
-    best_gamma_model = 2^j
-    best_nu_model = i/100
-  }
-# svm.predTrain = as.integer(!predict(svm.model))
-  }
-}
 svm.predTest = as.integer(!predict(svm.model, testData))
+t_obj = roc(testClass, svm.predTest)
+auc(t_obj)
 
-table(Predicted = svm.predTrain, Reference = trainClass)
-table(Predicted = svm.predTest, Reference = testClass)
 
-confTrain = table(Predicted = svm.predTrain, Reference = trainClass)
-confTest = table(Predicted = svm.predTest, Reference = testClass)
 

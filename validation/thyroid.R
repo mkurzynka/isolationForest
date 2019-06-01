@@ -2,19 +2,24 @@ setwd('validation/');
 
 library(rmatio)
 library(DMwR)
+library(e1071)
 library(pROC)
 
-data = read.mat('../data/mammography.mat')
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+data = read.mat('../data/thyroid.mat')
+
 attributesOfData = data[["X"]]
 classOfData = data.frame(data[["y"]])
 data = cbind(attributesOfData, classOfData)
-data[is.na(data)] = 0
-ndata = data[ ,1:6]
 
-# Normalizacja
-ndata = (ndata - min(ndata))/(max(ndata) - min(ndata))
+data_noClass_normalize = as.data.frame(lapply(data[1 : 6], normalize))
+# data_noClass_normalize = data_noClass_normalize[1:10000, ]
+data_onlyClass = data[, 7]
 
-dataSize = nrow(ndata)
+dataSize = nrow(data_noClass_normalize)
 trainSetSize = floor(0.7 * dataSize)
 testSetSize = dataSize - trainSetSize
 
@@ -22,44 +27,33 @@ set.seed(123)
 
 trainIds = sample(seq_len(dataSize), size = trainSetSize)
 
-trainData = ndata[trainIds, ]
-trainClass = data[trainIds, 7]
+trainData = data_noClass_normalize[trainIds, ]
+trainClass = data_onlyClass[trainIds]
 
-## szum
-trainData[ ,1] = (trainData[ ,1] + runif(nrow(trainData))/1e6)
-testData= ndata[-trainIds, ]
-testClass = data[-trainIds, 7]
-
-## Ciekawostka
-# Gdy dajemy do knn za duza populacje, on zwraca blad too many ties in knn, co znaczy, ze obiekty
-# zachodza na siebie. Rozwiazanie: wprowadzenie szumu.
+testData = data_noClass_normalize[-trainIds, ]
+testClass = data_onlyClass[-trainIds]
 
 library(class)
 best_k = 0
 best_k_auc = 0
 for(i in 1:20){
-  set.seed(1)
-  nn3 <- knn(trainData, testData, trainClass, k=i)
-  nn3 = as.numeric(nn3)
-  nn3[nn3 == 1] = 0
-  nn3[nn3 ==2 ] = 1
-  table(nn3, testClass)
-  
-  t_obj = roc(testClass, nn3)
-  plot(t_obj)
-  auc(t_obj)
-  if(auc(t_obj) > best_k_auc){
-    best_k_auc = auc(t_obj)
-    best_k = i
-  }
+set.seed(1)
+nn3 <- knn(trainData, testData, trainClass, k=i)
+nn3 = as.numeric(nn3)
+nn3[nn3 == 1] = 0
+nn3[nn3 ==2 ] = 1
+table(nn3, testClass)
+
+t_obj = roc(testClass, nn3)
+plot(t_obj)
+auc(t_obj)
+if(auc(t_obj) > best_k_auc){
+  best_k_auc = auc(t_obj)
+  best_k = i
+}
 }
 
-
-library("e1071")
-library(caret)
-# svm = e1071::svm(trainData[, 1:6], nu=0.09, type="one-classification", kernel="polynomial")
-# out_svm = as.integer(predict(svm))
-
+set.seed(123)
 best_model = 0
 for(i in seq(0.01, 0.2, 0.01)){
   for(j in seq(-2, 2, 0.5)){
@@ -86,10 +80,13 @@ for(i in seq(0.01, 0.2, 0.01)){
 
 svm.model = svm(trainData,y = trainClass,
                 type='one-classification',
-                nu= 0.2,
-                gamma = 0.5,
-                kernel="radial")
+                nu= 0.15,
+                gamma = 0.3535534,
+                kernel="radial",
+                probability = TRUE)
 svm.predTest = as.integer(!predict(svm.model, testData))
 t_obj = roc(testClass, svm.predTest)
 auc(t_obj)
-table(Predicted = svm.predTest, Reference = testClass)
+
+
+
