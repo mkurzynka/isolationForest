@@ -54,6 +54,19 @@ for(i in 1:20){
   }
 }
 
+confMatrix = table(nn3, testClass)
+confMatrix
+
+n = sum(confMatrix) # number of instances
+diag = diag(confMatrix) # number of correctly classified instances per class
+
+confMatrix.accuracy = sum(diag) / n 
+confMatrix.sensitivity = sensitivity(confMatrix)
+confMatrix.specificity = specificity(confMatrix)
+confMatrix.accuracy
+confMatrix.sensitivity
+confMatrix.specificity
+
 
 library("e1071")
 library(caret)
@@ -90,6 +103,19 @@ svm.model = svm(trainData,y = trainClass,
                 gamma = 0.5,
                 kernel="radial")
 svm.predTest = as.integer(!predict(svm.model, testData))
+
+
+# SVM miary jakości
+confMatrix = table(svm.predTest, testClass)
 t_obj = roc(testClass, svm.predTest)
 auc(t_obj)
-table(Predicted = svm.predTest, Reference = testClass)
+
+n = sum(confMatrix) # number of instances
+diag = diag(confMatrix) # number of correctly classified instances per class
+
+confMatrix.accuracy = sum(diag) / n 
+confMatrix.sensitivity = sensitivity(confMatrix)
+confMatrix.specificity = specificity(confMatrix)
+confMatrix.accuracy
+confMatrix.sensitivity
+confMatrix.specificity
