@@ -37,11 +37,25 @@ testClass = data[-trainIds, 7]
 library(class)
 nn3 <- knn(trainData[, 1:6], testData[, 1:6], trainClass, k=2)
 nn3 = as.numeric(nn3)
-table(nn3, testClass)
-
+nn3[nn3 == 1] = 0
+nn3[nn3 == 2] = 1
+# KNN miary jakości
 t_obj = roc(testClass, nn3)
 plot(t_obj)
 auc(t_obj)
+
+confMatrix = table(nn3, testClass)
+confMatrix
+
+n = sum(confMatrix) # number of instances
+diag = diag(confMatrix) # number of correctly classified instances per class
+
+confMatrix.accuracy = sum(diag) / n 
+confMatrix.sensitivity = sensitivity(confMatrix)
+confMatrix.specificity = specificity(confMatrix)
+confMatrix.accuracy
+confMatrix.sensitivity
+confMatrix.specificity
 
 
 library("e1071")
@@ -79,5 +93,19 @@ svm.model = svm(trainData,y = trainClass,
                 gamma = 0.5,
                 kernel="radial")
 svm.predTest = as.integer(!predict(svm.model, testData))
+
+
+# SVM miary jakości
+confMatrix = table(svm.predTest, testClass)
 t_obj = roc(testClass, svm.predTest)
 auc(t_obj)
+
+n = sum(confMatrix) # number of instances
+diag = diag(confMatrix) # number of correctly classified instances per class
+
+confMatrix.accuracy = sum(diag) / n 
+confMatrix.sensitivity = sensitivity(confMatrix)
+confMatrix.specificity = specificity(confMatrix)
+confMatrix.accuracy
+confMatrix.sensitivity
+confMatrix.specificity
