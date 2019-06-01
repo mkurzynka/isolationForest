@@ -54,6 +54,12 @@ for(i in 1:20){
   }
 }
 
+set.seed(1)
+nn3 <- knn(trainData, testData, trainClass, k=1)
+nn3 = as.numeric(nn3)
+nn3[nn3 == 1] = 0
+nn3[nn3 ==2 ] = 1
+
 confMatrix = table(nn3, testClass)
 confMatrix
 

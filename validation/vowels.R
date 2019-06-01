@@ -53,6 +53,24 @@ for(i in 1:20){
   }
 }
 
+set.seed(1)
+nn3 <- knn(trainData, testData, trainClass, k=1)
+nn3 = as.numeric(nn3)
+nn3[nn3 == 1] = 0
+nn3[nn3 ==2 ] = 1
+
+confMatrix = table(nn3, testClass)
+confMatrix
+
+n = sum(confMatrix) # number of instances
+diag = diag(confMatrix) # number of correctly classified instances per class
+
+confMatrix.accuracy = sum(diag) / n 
+confMatrix.sensitivity = sensitivity(confMatrix)
+confMatrix.specificity = specificity(confMatrix)
+confMatrix.accuracy
+confMatrix.sensitivity
+confMatrix.specificity
 
 set.seed(123)
 best_model = 0
@@ -85,8 +103,19 @@ svm.model = svm(trainData,y = trainClass,
                 gamma = 0.3535534,
                 kernel="radial")
 svm.predTest = as.integer(!predict(svm.model, testData))
+
+# SVM quality
+confMatrix = table(svm.predTest, testClass)
 t_obj = roc(testClass, svm.predTest)
 auc(t_obj)
 
+n = sum(confMatrix) # number of instances
+diag = diag(confMatrix) # number of correctly classified instances per class
 
+confMatrix.accuracy = sum(diag) / n 
+confMatrix.sensitivity = sensitivity(confMatrix)
+confMatrix.specificity = specificity(confMatrix)
+confMatrix.accuracy
+confMatrix.sensitivity
+confMatrix.specificity
 
