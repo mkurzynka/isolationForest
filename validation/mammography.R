@@ -2,6 +2,7 @@ setwd('validation/');
 
 library(rmatio)
 library(DMwR)
+library(pROC)
 
 data = read.mat('../data/mammography.mat')
 attributesOfData = data[["X"]]
@@ -33,16 +34,14 @@ testClass = data[-trainIds, 7]
 # Gdy dajemy do knn za duza populacje, on zwraca blad too many ties in knn, co znaczy, ze obiekty
 # zachodza na siebie. Rozwiazanie: wprowadzenie szumu.
 
-  library(class)
-  nn3 <- knn(trainData[, 1:6], testData[, 1:6], trainClass, k=2)
-  nn3 = as.numeric(nn3)
-  table(nn3, testClass)
+library(class)
+nn3 <- knn(trainData[, 1:6], testData[, 1:6], trainClass, k=2)
+nn3 = as.numeric(nn3)
+table(nn3, testClass)
 
-library("ROCR")
-pred = prediction(nn3, testClass)
-perf = performance(pred, "tpr", "fpr")
-plot(perf, col="blue")
-abline(0, 1)
+t_obj = roc(testClass, nn3)
+plot(t_obj)
+auc(t_obj)
 
 
 library("e1071")
@@ -50,19 +49,35 @@ library(caret)
 # svm = e1071::svm(trainData[, 1:6], nu=0.09, type="one-classification", kernel="polynomial")
 # out_svm = as.integer(predict(svm))
 
-svm.model = e1071::svm(trainData[, 1:6],y = trainClass,
-               type='one-classification',
-               nu=0.10,
-               scale=TRUE,
-               kernel="radial",
-               cost = 1e2)
+best_model = 0
+for(i in seq(0.01, 0.2, 0.01)){
+  for(j in seq(-2, 2, 0.5)){
+    svm.model = svm(trainData,y = trainClass,
+                    type='one-classification',
+                    nu= i,
+                    gamma = 2^j,
+                    kernel="radial")
+    svm.predTest = as.integer(!predict(svm.model, testData))
+    
+    # table(Predicted = svm.predTrain, Reference = trainClass)
+    # print(table(Predicted = svm.predTest, Reference = testClass))
+    t_obj = roc(testClass, svm.predTest)
+    # print(auc(t_obj))
+    if(auc(t_obj) > best_model) {
+      best_roc = t_obj
+      best_model = auc(t_obj)
+      best_gamma_model = 2^j
+      best_nu_model = i
+    }
+    # svm.predTrain = as.integer(!predict(svm.model))
+  }
+}
 
-svm.predTrain = as.integer(!predict(svm))
-
-svm.predTest = predict(svm.model, testData[1 : 6])
-
-confTrain = table(Predicted = svm.predTrain, Reference = trainClass)
-confTest = table(Predicted = svm.predTest, Reference = testClass)
-
-
-
+svm.model = svm(trainData,y = trainClass,
+                type='one-classification',
+                nu= 0.2,
+                gamma = 0.5,
+                kernel="radial")
+svm.predTest = as.integer(!predict(svm.model, testData))
+t_obj = roc(testClass, svm.predTest)
+auc(t_obj)
