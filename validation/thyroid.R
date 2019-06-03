@@ -1,4 +1,3 @@
-setwd('/home/michal/R/Projects/isolationForest')
 source('R/isolationForest.R')
 library(rmatio)
 library(DMwR)
