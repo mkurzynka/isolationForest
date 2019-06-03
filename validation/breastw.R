@@ -14,7 +14,6 @@ classOfData = data.frame(data[["y"]])
 data = cbind(attributesOfData, classOfData)
 
 data_noClass_normalize = as.data.frame(lapply(data[1 : 9], normalize))
-# data_noClass_normalize = data_noClass_normalize[1:10000, ]
 data_onlyClass = data[, 10]
 
 dataSize = nrow(data_noClass_normalize)

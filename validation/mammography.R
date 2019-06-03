@@ -1,4 +1,3 @@
-setwd('/home/michal/R/Projects/isolationForest')
 source('R/isolationForest.R')
 library(rmatio)
 library(DMwR)
@@ -15,10 +14,8 @@ data = cbind(attributesOfData, classOfData)
 data[is.na(data)] = 0
 ndata = data[ ,1:6]
 
-# Normalizacja
 ndata = (ndata - min(ndata))/(max(ndata) - min(ndata))
 
-# Podzielenie danych
 dataSize = nrow(ndata)
 trainSetSize = floor(0.7 * dataSize)
 testSetSize = dataSize - trainSetSize
@@ -29,16 +26,13 @@ trainIds = sample(seq_len(dataSize), size = trainSetSize)
 trainData = ndata[trainIds, ]
 trainClass = data[trainIds, 7]
 
-## szum
+## Noise
 contTrainData = trainData
 contTrainData[ ,1] = (trainData[ ,1] + runif(nrow(trainData))/1e6)
 
 testData= ndata[-trainIds, ]
 testClass = data[-trainIds, 7]
 
-## Ciekawostka
-# Gdy dajemy do knn za duza populacje, on zwraca blad too many ties in knn, co znaczy, ze obiekty
-# zachodza na siebie. Rozwiazanie: wprowadzenie szumu.
 ################################KNN################################
 set.seed(123)
 nn3 <- knn(contTrainData, testData, trainClass, k=1)
